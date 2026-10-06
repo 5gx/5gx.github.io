@@ -1,0 +1,87 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <title>PNG数值修改工具</title>
+    <style>
+        body { font-family: sans-serif; padding: 20px; line-height: 1.6; }
+        .container { max-width: 600px; margin: auto; border: 1px solid #ccc; padding: 20px; border-radius: 8px; }
+        input, button { margin: 10px 0; display: block; width: 100%; padding: 8px; }
+        canvas { border: 1px solid #000; margin-top: 20px; max-width: 100%; display: none; }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>PNG数值修改工具</h2>
+    
+    <label>1. 选择图片：</label>
+    <input type="file" id="upload" accept="image/png">
+
+    <label>2. 输入要修改的数值：</label>
+    <input type="text" id="newValue" placeholder="例如：5,000">
+
+    <button id="processBtn">生成图片并下载</button>
+    
+    <canvas id="canvas"></canvas>
+</div>
+
+<script>
+    const upload = document.getElementById('upload');
+    const newValueInput = document.getElementById('newValue');
+    const processBtn = document.getElementById('processBtn');
+    const canvas = document.getElementById('canvas');
+    const ctx = canvas.getContext('2d');
+
+    // --- 配置项：请根据图片的布局在此处进行调整 ---
+    const config = {
+        targetX: 505,      // 文字开始绘制的X坐标
+        targetY: 305,      // 文字开始绘制的Y坐标
+        eraseX: 484,       // 填充区域起始X坐标
+        eraseY: 296,       // 填充区域起始Y坐标
+        eraseW: 138,       // 填充区域宽度
+        eraseH: 46,        // 填充区域高度
+        fontSize: '36px',  // 字体大小
+        fontFamily: '"Yu Gothic", "YuGothic", sans-serif', // 字体
+        textColor: 'white',  // 文字颜色
+        bgColor: 'black'     // 背景颜色（用于擦除原内容）
+    };
+
+    processBtn.addEventListener('click', () => {
+        if (!upload.files[0]) return alert('请选择图片');
+        
+        const reader = new FileReader();
+        reader.onload = (event) => {
+            const img = new Image();
+            img.onload = () => {
+                // 根据图片尺寸调整画布大小
+                canvas.width = img.width;
+                canvas.height = img.height;
+                
+                // 1. 绘制原始图片
+                ctx.drawImage(img, 0, 0);
+                
+                // 2. 擦除原来的数值（使用背景颜色进行填充）
+                ctx.fillStyle = config.bgColor;
+                ctx.fillRect(config.eraseX, config.eraseY, config.eraseW, config.eraseH);
+                
+                // 3. 绘制新的数值
+                ctx.fillStyle = config.textColor;
+                ctx.font = `bold ${config.fontSize} ${config.fontFamily}`;
+                ctx.textBaseline = 'top';
+                ctx.fillText(newValueInput.value, config.targetX, config.targetY);
+                
+                // 4. 下载
+                const link = document.createElement('a');
+                link.download = 'updated_image.png';
+                link.href = canvas.toDataURL('image/png');
+                link.click();
+            };
+            img.src = event.target.result;
+        };
+        reader.readAsDataURL(upload.files[0]);
+    });
+</script>
+
+</body>
+</html>
